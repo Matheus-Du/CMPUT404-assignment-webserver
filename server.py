@@ -51,11 +51,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
             # if path is incorrect or not found, send 404
             self.sendResponse(404)
             return
-        
-        if path != "301":
-            # if path is correct and not a redirect, send 200
-            self.sendResponse(200, path)
-            return
+
+        # if path is correct, send 200
+        self.sendResponse(200, path)
+        return
         
     def getPath(self):
         # get the path from the request and verify that the request can access it
@@ -75,13 +74,24 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if not self.canAccess(fullPath):
             # if we can't access the path, return 404
             return False
+        
+        # if path is a directory, return the index.html of the directory
+        if isDir:
+            if path[-1] != "/":
+                # if the path doesn't have a trailing slash, redirect to the path with a trailing slash
+                path += "/"
+                # send 301 to notify client of redirect
+                self.sendResponse(301, path)
+            return fullPath + "index.html"
 
-        return path
+        # if path is a file, return the path
+        return fullPath
 
     def sendResponse(self, responseType, path=None):
         # send the appropriate response to the client based on the response type
         # TODO: the following is just a placeholder, replace with actual responses
         print("Sending response of type " + str(responseType))
+        print("Path: " + str(path))
         return
 
     def canAccess(self, path):
