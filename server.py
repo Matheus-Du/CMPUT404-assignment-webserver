@@ -89,9 +89,29 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def sendResponse(self, responseType, path=None):
         # send the appropriate response to the client based on the response type
-        # TODO: the following is just a placeholder, replace with actual responses
-        print("Sending response of type " + str(responseType))
-        print("Path: " + str(path))
+
+        if responseType == 200:
+            # if response is 200, send the file at the path (index.html if path is a directory)
+            header = "HTTP/1.1 200 OK\r\nContent-Type: text/{}\r\n\r\n".format(path.split(".")[1])
+            # open the file and read all contents
+            file = open(path, "r")
+            content = file.read()
+            file.close()
+            self.request.sendall(bytearray(header + content, 'utf-8'))
+        elif responseType == 301:
+            # if response is 301, send a redirect to the path
+            header = "HTTP/1.1 301 Moved Permanently\r\n"
+            header += "Location: " + path + "\r\n"
+            self.request.sendall(bytearray(header, 'utf-8'))
+        elif responseType == 404:
+            # if response is 404, send a 404
+            header = "HTTP/1.1 404 Not Found\r\n"
+            self.request.sendall(bytearray(header, 'utf-8'))
+        elif responseType == 405:
+            # if response is 405, send a 405
+            header = "HTTP/1.1 405 Method Not Allowed\r\n"
+            self.request.sendall(bytearray(header, 'utf-8'))
+        
         return
 
     def canAccess(self, path):
