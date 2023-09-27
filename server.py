@@ -33,6 +33,41 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
         self.request.sendall(bytearray("OK",'utf-8'))
+        
+        requestType = self.data.decode().split()[0]
+        
+        if requestType == "GET":
+            self.verifyGET()
+        else:
+            # since only allowed method is GET, return 405 for all other methods
+            self.sendResponse(405)
+
+    def verifyGET(self):
+        # verify that the provided path is valid, returning 200 if it is and 404 if it is not
+        path = self.getPath()
+
+        if path is False:
+            # if path is incorrect or not found, send 404
+            self.sendResponse(404)
+            return
+        
+        if path != "301":
+            # if path is correct and not a redirect, send 200
+            self.sendResponse(200, path)
+            return
+        
+    def getPath(self):
+        # get the path from the request and verify that the request can access it
+        path = self.data.decode().split()[1]
+        # TODO: verify that the path is valid
+        print("Path is " + path)
+        return path
+
+    def sendResponse(self, responseType, path=None):
+        # send the appropriate response to the client based on the response type
+        # TODO: the following is just a placeholder, replace with actual responses
+        print("Sending response of type " + str(responseType))
+        return
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
