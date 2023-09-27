@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -59,8 +60,22 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def getPath(self):
         # get the path from the request and verify that the request can access it
         path = self.data.decode().split()[1]
-        # TODO: verify that the path is valid
-        print("Path is " + path)
+        fullPath = "www" + path
+
+        # verify that path is file or directory
+        # Citation: https://stackoverflow.com/questions/17558181/determine-if-string-input-could-be-a-valid-directory-in-python
+        isFile = os.path.isfile(fullPath)
+        isDir = os.path.isdir(fullPath)
+
+        if not isFile and not isDir:
+            # if path isn't an existing file/directory, path is invalid
+            return False
+        
+        # verify that we can access the path
+        if not self.canAccess(fullPath):
+            # if we can't access the path, return 404
+            return False
+
         return path
 
     def sendResponse(self, responseType, path=None):
@@ -68,6 +83,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # TODO: the following is just a placeholder, replace with actual responses
         print("Sending response of type " + str(responseType))
         return
+
+    def canAccess(self, path):
+        # verify that the request can access the given path to the www directory
+        rootPath = os.path.abspath("www")
+        fullPath = os.path.abspath(path)
+
+        # get all directories in root www directory
+        subDirs = []
+        for dir in os.walk(rootPath):
+            subDirs.append(dir[0])
+
+        # if the path is a directory, verify that it is in the www directory
+        if os.path.isdir(fullPath):
+            if fullPath not in subDirs:
+                # if the directory is not in the www directory, return False
+                return False
+        # if the path is a file, verify that it is in the www directory
+        elif os.path.isfile(fullPath):
+            dir = os.path.dirname(fullPath)
+            if dir not in subDirs:
+                # if the file's directory is not in the www directory, return False
+                return False
+
+        # if the path is valid, return True
+        return True
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
