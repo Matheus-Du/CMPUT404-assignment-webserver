@@ -89,24 +89,23 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def sendResponse(self, responseType, path=None):
         # send the appropriate response to the client based on the response type
         format = "utf-8"
-        # TODO: for some reason, each header is being sent with 'OK' at the beginning
 
         if responseType == 200:
             # if response is 200, send the file at the path (index.html if path is a directory)
-            header = 'HTTP/1.1 200 OK\r\nContent-Type: text/{}; charset={}\r\n\r\n'.format(path.split(".")[1], format)
+            header = 'HTTP/1.1 200 OK\r\nContent-Type: text/{}\r\ncharset={}\r\n\r\n'.format(path.split(".")[1], format)
             # open the file and read all contents
             file = open(path, "r")
             content = file.read()
             file.close()
             header += content
-            self.request.sendall(bytearray(header + content, format))
         elif responseType == 301:
             # if response is 301, send a redirect to the path
             header = "HTTP/1.1 301 Moved Permanently\r\n"
             header += "Location: " + path + "\r\n"
         elif responseType == 404:
             # if response is 404, send a 404
-            header = "HTTP/1.1 404 Not FOUND\r\nContent-Type: text/plain; charset={}\r\n\r\n".format(format)
+            header = "HTTP/1.1 404 Not FOUND\r\nContent-Type: text/html\r\ncharset={}\r\n\n \
+            Oops! This web page doesn't exist! Try another one! Or not!\r\n".format(format)
         elif responseType == 405:
             # if response is 405, send a 405
             header = "HTTP/1.1 405 Method Not Allowed\r\n"
