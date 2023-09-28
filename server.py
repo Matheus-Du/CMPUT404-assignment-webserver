@@ -33,7 +33,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
         
         requestType = self.data.decode().split()[0]
         
@@ -89,29 +88,30 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def sendResponse(self, responseType, path=None):
         # send the appropriate response to the client based on the response type
+        format = "utf-8"
+        # TODO: for some reason, each header is being sent with 'OK' at the beginning
 
         if responseType == 200:
             # if response is 200, send the file at the path (index.html if path is a directory)
-            header = "HTTP/1.1 200 OK\r\nContent-Type: text/{}\r\n\r\n".format(path.split(".")[1])
+            header = 'HTTP/1.1 200 OK\r\nContent-Type: text/{}; charset={}\r\n\r\n'.format(path.split(".")[1], format)
             # open the file and read all contents
             file = open(path, "r")
             content = file.read()
             file.close()
-            self.request.sendall(bytearray(header + content, 'utf-8'))
+            header += content
+            self.request.sendall(bytearray(header + content, format))
         elif responseType == 301:
             # if response is 301, send a redirect to the path
             header = "HTTP/1.1 301 Moved Permanently\r\n"
             header += "Location: " + path + "\r\n"
-            self.request.sendall(bytearray(header, 'utf-8'))
         elif responseType == 404:
             # if response is 404, send a 404
-            header = "HTTP/1.1 404 Not Found\r\n"
-            self.request.sendall(bytearray(header, 'utf-8'))
+            header = "HTTP/1.1 404 Not FOUND\r\nContent-Type: text/plain; charset={}\r\n\r\n".format(format)
         elif responseType == 405:
             # if response is 405, send a 405
             header = "HTTP/1.1 405 Method Not Allowed\r\n"
-            self.request.sendall(bytearray(header, 'utf-8'))
-        
+            
+        self.request.sendall(bytearray(header, format))
         return
 
     def canAccess(self, path):
